@@ -28,7 +28,6 @@ vx=random_mps(sites)
 vy=random_mps(sites)
 
 
-vx_t, vy_t = RK4(Opt, vx, vy; eps=1e-6, maxiter=100)
+vx_t, vy_t = time_evolution(Opt, vx, vy, 1.0; eps=1e-6, maxiter=100)
 
-@show [vx_t[i] for i in 1:length(vx_t)]
-@show [vx[i] for i in 1:length(vx)]
+

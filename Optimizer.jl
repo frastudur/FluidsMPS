@@ -17,6 +17,7 @@ Diff_2_8_y,
 QuantumFluidsOpt,
 getinfo,
 movecenter!,
-RK4
+RK4,
+time_evolution
 end
 

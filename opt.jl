@@ -340,3 +340,15 @@ function RK4(optim, ux, uy; eps=1e-6, maxiter=100)
     result = [U1x, U1y] + [U2x, U2y] + [U3x, U3y] + [U4x, U4y] 
     return result[1], result[2]
 end
+
+function time_evolution(optim, vx, vy, tmax; eps=1e-6, maxiter=100)
+    dt=optim.params.dt
+    t=0.0
+    while t < tmax
+        println("Time: $t")
+        reset!(optim)
+        vx, vy = RK4(optim, vx, vy; eps=eps, maxiter=maxiter)
+        t += dt
+    end
+    return vx, vy
+end
