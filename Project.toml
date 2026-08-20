@@ -1,0 +1,10 @@
+[deps]
+ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
+ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
+IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
+QuanticsGrids = "634c7f73-3e90-4749-a1bd-001b8efc642d"
+QuanticsTCI = "b11687fd-3a1c-4c41-97d0-998ab401d50e"
+TCIITensorConversion = "9f0aa9f4-9415-4e6a-8795-331ebf40aa04"
+TensorCrossInterpolation = "b261b2ec-6378-4871-b32e-9173bb050604"
