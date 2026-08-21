@@ -1,0 +1,1 @@
+kinetic_energy(ux, uy, h) = 0.5 * sum(abs2.(ux) .+ abs2.(uy)) * h^2

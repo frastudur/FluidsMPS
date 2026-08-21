@@ -1,8 +1,8 @@
 struct Params
     mu::Float64 #penalty parameter 
-    ni::Float64 #Viscosity number
+    vis::Float64 #Viscosity number
     dt::Float64 #time step
-    N::Int #number of MPS sites
+    nbits::Int #number of MPS sites
     dq::Float64 #grid spacing in both x and y directions
 end
 
@@ -15,27 +15,27 @@ mutable struct QuantumFluidsOpt
     center::Int
 end
 
-function QuantumFluidsOpt(N::Int, ops::Dict{String, MPO}, mu::Float64, ni::Float64, dt::Float64, dq::Float64)
-    params = Params(mu, ni, dt, N, dq)
+function QuantumFluidsOpt(nbits::Int, ops::Dict{String, MPO}, mu::Float64, vis::Float64, dt::Float64, dq::Float64)
+    params = Params(mu, vis, dt, nbits, dq)
  
-    Ax, Ay=Vector{ITensor}(undef, N), Vector{ITensor}(undef, N)
+    Ax, Ay=Vector{ITensor}(undef, nbits), Vector{ITensor}(undef, nbits)
     Ax[1]=ITensor(1.0)
-    Ax[N]=ITensor(1.0)
+    Ax[nbits]=ITensor(1.0)
     Ay[1]=ITensor(1.0)
-    Ay[N]=ITensor(1.0)
+    Ay[nbits]=ITensor(1.0)
     A=Dict(:x=>Ax, :y=>Ay)
     
     keys=["x,x", "x,y", "y,y"]
-    values=[Vector{ITensor}(undef, N) for _ in 1:length(keys)]
+    values=[Vector{ITensor}(undef, nbits) for _ in 1:length(keys)]
     H=Dict(zip(keys, values))
 
     keys=["x,x,x", "x,y,x", "y,x,y", "y,y,y"]  
-    values=[Vector{ITensor}(undef, N) for _ in 1:length(keys)]
+    values=[Vector{ITensor}(undef, nbits) for _ in 1:length(keys)]
 
     D=Dict(zip(keys, values))
     for key in keys
         D[key][1]=ITensor(1.0)
-        D[key][N]=ITensor(1.0)
+        D[key][nbits]=ITensor(1.0)
     end
     return QuantumFluidsOpt(params, ops, A, H, D, 0)
 end
@@ -45,9 +45,9 @@ function getinfo(optim::QuantumFluidsOpt)
     #print list of parameters, operators keys 
     println("Parameters:")
     println("penalty term: ", optim.params.mu)
-    println("Kinematic viscosity: ", optim.params.ni)
+    println("Kinematic viscosity: ", optim.params.vis)
     println("dt: ", optim.params.dt)
-    println("Resolution (number of sites of the MPS): ", optim.params.N)
+    println("Resolution (number of sites of the MPS): ", optim.params.nbits)
     println("spacing (dq): ", optim.params.dq)
     println("Differential operators: ", keys(optim.ops))
     println("Center site: ", optim.center)
@@ -56,18 +56,18 @@ end
 
 function reset!(optim::QuantumFluidsOpt)
     #reset the contraction matrices to identity
-    N=optim.params.N
-    for i in 1:N
+    nbits=optim.params.nbits
+    for i in 1:nbits
         optim.A[:x][i]=ITensor(1.0)
         optim.A[:y][i]=ITensor(1.0)
     end
     for key in keys(optim.H)
-        for i in 1:N
+        for i in 1:nbits
             optim.H[key][i]=ITensor(1.0)
         end
     end
     for key in keys(optim.D)
-        for i in 1:N
+        for i in 1:nbits
             optim.D[key][i]=ITensor(1.0)
         end
     end
@@ -236,15 +236,15 @@ function linoperator(optim, v, tau2, xinds, yinds, nx, ny)
 end
 
 
-function rhs(optim, a, b, tau, ni) 
+function rhs(optim, a, b, tau, vis) 
     i=optim.center
     beta_x = environment(optim.A[:x], i, a[:x][i], nothing)
-    beta_x -= (tau * ni * ni) * environment(optim.D["x,x,x"], i, b[:x][i], optim.ops["d2x"][i])
-    beta_x -= (tau * ni * ni) * environment(optim.D["x,y,x"], i, b[:x][i], optim.ops["d2y"][i])
+    beta_x -= (tau * vis * vis) * environment(optim.D["x,x,x"], i, b[:x][i], optim.ops["d2x"][i])
+    beta_x -= (tau * vis * vis) * environment(optim.D["x,y,x"], i, b[:x][i], optim.ops["d2y"][i])
 
     beta_y = environment(optim.A[:y], i, a[:y][i], nothing)
-    beta_y -= (tau * ni * ni) * environment(optim.D["y,x,y"], i, b[:y][i], optim.ops["d2x"][i])
-    beta_y -= (tau * ni * ni) * environment(optim.D["y,y,y"], i, b[:y][i], optim.ops["d2y"][i])
+    beta_y -= (tau * vis * vis) * environment(optim.D["y,x,y"], i, b[:y][i], optim.ops["d2x"][i])
+    beta_y -= (tau * vis * vis) * environment(optim.D["y,y,y"], i, b[:y][i], optim.ops["d2y"][i])
     return [beta_x, beta_y]
 end
 
@@ -257,13 +257,13 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; eps=1e-6, maxiter=100)
     b=Dict(:x=>bx, :y=>by)
 
     tau2=tau*tau
-    ni=optim.params.ni
+    vis=optim.params.vis
     dq=optim.params.dq
-    N=optim.params.N
+    nbits=optim.params.nbits
     ops=optim.ops
 
     function sweep!(i::Int)
-        movecenter!(optim, i, v, a, b, N)
+        movecenter!(optim, i, v, a, b, nbits)
 
         cx = v[:x][optim.center]
         cy = v[:y][optim.center]
@@ -278,7 +278,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; eps=1e-6, maxiter=100)
         
         M=FunctionMap{Float64,false}(operator, nx+ny)
 
-        beta = vcat(vec.(array.(rhs(optim, a, b, tau, ni)))...)
+        beta = vcat(vec.(array.(rhs(optim, a, b, tau, vis)))...)
         @assert length(beta) == nx + ny "Length of beta does not match the expected dimension size. Expected: $(nx + ny), got: $(length(beta))"
 
         cvec = vcat(vec.(array.([cx, cy]))...)
@@ -295,13 +295,13 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; eps=1e-6, maxiter=100)
     E_1=2*eps
 
     while abs((E_1 - E_0)/E_0) > eps
-        for i in 1:N
+        for i in 1:nbits
             println("updating site $i")
             sweep!(i)
             
         end
 
-        for i in N-1:-1:1
+        for i in nbits-1:-1:1
             println("updating site $i")
             sweep!(i)
         end
@@ -314,7 +314,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; eps=1e-6, maxiter=100)
 end
 
 
-function RK4(optim, ux, uy; eps=1e-6, maxiter=100)
+function RK4(optim, ux, uy; eps=1e-6, maxiter=100, maxdim=16)
     #RK4 method for time evolution of the MPS
     #ux, uy: MPS for the velocity field in x and y directions
     #eps: tolerance for the optimization
@@ -338,16 +338,18 @@ function RK4(optim, ux, uy; eps=1e-6, maxiter=100)
     U4x, U4y = optimize(optim, ux, uy, ux/4, uy/4, b[1], b[2], dt/6; eps=eps, maxiter=maxiter)
 
     result = [U1x, U1y] + [U2x, U2y] + [U3x, U3y] + [U4x, U4y] 
+
+    truncate!.(result; maxdim=maxdim)
     return result[1], result[2]
 end
 
-function time_evolution(optim, vx, vy, tmax; eps=1e-6, maxiter=100)
+function time_evolution(optim, vx, vy, tmax; eps=1e-6, maxiter=100, maxdim=16)
     dt=optim.params.dt
     t=0.0
     while t < tmax
         println("Time: $t")
         reset!(optim)
-        vx, vy = RK4(optim, vx, vy; eps=eps, maxiter=maxiter)
+        vx, vy = RK4(optim, vx, vy; eps=eps, maxiter=maxiter, maxdim=maxdim)
         t += dt
     end
     return vx, vy
