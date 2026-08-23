@@ -362,20 +362,6 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         beta_vec = vcat(vec.(array.([beta_x, beta_y]))...)
         @assert length(beta_vec) == nx + ny "Length of beta does not match the expected dimension size. Expected: $(nx + ny), got: $(length(beta_vec))"
         
-        exact_x = environment(optim.A[:x], i, a[:x][i], nothing)
-        exact_y = environment(optim.A[:y], i, a[:y][i], nothing)
-        exact_x = permute(exact_x, xinds)
-        exact_y = permute(exact_y, yinds)
-
-        exact_candidate = vcat(vec.(array.([exact_x, exact_y]))...)
-        @assert length(exact_candidate) == nx + ny "Length of exact u/4 candidate does not match the local system size"
-        residual = operator(exact_candidate) - beta_vec
-    
-        residual_norm = sqrt(real(dot(residual, residual)))
-        beta_norm = sqrt(real(dot(beta_vec, beta_vec)))
-        relative_residual = residual_norm / max(beta_norm, eps(Float64))
-        maximum_residual = maximum(abs, residual)
-        println("site $i u/4 residual: norm=$residual_norm " *"relative=$relative_residual maxabs=$maximum_residual")
 
         cvec = vcat(vec.(array.([cx, cy]))...)
         @assert length(cvec) == nx + ny "Length of cvec does not match the expected dimension size. Expected: $(nx + ny), got: $(length(cvec))"
@@ -449,6 +435,7 @@ function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, m
         reset!(optim)
         vx, vy = RK4(optim, vx, vy; tol=tol, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps)
         t += dt
+        @show norm(vx), norm(vy)
     end
     return vx, vy
 end

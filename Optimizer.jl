@@ -18,6 +18,8 @@ QuantumFluidsOpt,
 getinfo,
 movecenter!,
 RK4,
+environment,
+linoperator,
 time_evolution
 end
 

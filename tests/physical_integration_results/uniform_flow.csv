@@ -1,0 +1,2 @@
+timestamp,test_name,test_description,metric,metric_description,measured_value,expected_condition,tolerance,status,nbits,grid_size,dt,vis,mu,solver_tolerance,maxiter
+"2026-08-21T15:00:47","Uniform flow is stationary","Checks that one RK4 step leaves the constant velocity field ux=1.0, uy=-0.25 unchanged.","relative_velocity_error","Relative L2 error of the evolved velocity against the initial uniform velocity.","0.7329079127956964","value <= tolerance","1.0e-5","FAIL","4","16","0.001","0.5","250000.0","1.0e-6","100"

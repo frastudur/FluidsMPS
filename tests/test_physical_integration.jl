@@ -98,13 +98,13 @@ function divergence_free_mode(nbits, mode; amplitude=1.0, L=1.0)
 end
 
 function evolve_one_step(ux, uy, h; mu=DEFAULT_MU, vis=DEFAULT_VIS,
-                         dt=DEFAULT_DT, eps=1.0e-6, maxiter=100)
+                         dt=DEFAULT_DT, eps=1.0e-6, maxiter=100, maxsweeps=100)
     nbits = round(Int, log2(size(ux, 1)))
     sites = siteinds("Qudit", nbits; dim=4)
     ux_mps = dense_field_to_mps(ux, sites; cutoff=0.0)
     uy_mps = dense_field_to_mps(uy, sites; cutoff=0.0)
     optimizer = make_optimizer(sites, h; mu, vis, dt)
-    evolved_x, evolved_y = RK4(optimizer, ux_mps, uy_mps; eps, maxiter)
+    evolved_x, evolved_y = RK4(optimizer, ux_mps, uy_mps; eps=eps, maxiter=maxiter, maxsweeps=maxsweeps)
     return (
         mps_to_dense_field(evolved_x, sites),
         mps_to_dense_field(evolved_y, sites),
@@ -113,12 +113,12 @@ end
 
 function test_uniform_flow(; nbits=DEFAULT_NBITS, dt=DEFAULT_DT,
                            vis=DEFAULT_VIS, mu=DEFAULT_MU,
-                           solver_tolerance=1.0e-6, maxiter=100)
+                           solver_tolerance=1.0e-6, maxiter=100, maxsweeps=100)
     uniform_tolerance = 1.0e-5
     @testset "Uniform flow is stationary" begin
         ux0, uy0, h = uniform_velocity(nbits)
         ux1, uy1 = evolve_one_step(
-            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter,
+            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter=maxiter, maxsweeps=maxsweeps,
         )
         error = relative_velocity_error(ux1, uy1, ux0, uy0)
         @printf("uniform-flow relative error: %.6e\n", error)
@@ -138,13 +138,13 @@ end
 
 function test_fourier_mode_decay(; nbits=DEFAULT_NBITS, dt=DEFAULT_DT,
                                  vis=DEFAULT_VIS, mu=DEFAULT_MU,
-                                 solver_tolerance=1.0e-6, maxiter=100)
+                                 solver_tolerance=1.0e-6, maxiter=100, maxsweeps=100)
     mode_tolerance = 5.0e-3
     divergence_tolerance = 1.0e-5
     @testset "Divergence-free Fourier mode has the correct decay" begin
         ux0, uy0, h, k = divergence_free_mode(nbits, 1)
         ux1, uy1 = evolve_one_step(
-            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter,
+            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter=maxiter, maxsweeps=maxsweeps,
         )
         amplitude = exp(-2 * vis^2 * k^2 * dt)
         expected_x = amplitude .* ux0
@@ -175,12 +175,12 @@ end
 
 function test_kinetic_energy_decay(; nbits=DEFAULT_NBITS, dt=DEFAULT_DT,
                                    vis=DEFAULT_VIS, mu=DEFAULT_MU,
-                                   solver_tolerance=1.0e-6, maxiter=100)
+                                   solver_tolerance=1.0e-6, maxiter=100, maxsweeps=100)
     mode_tolerance = 5.0e-3
     @testset "Kinetic energy decays at the physical rate" begin
         ux0, uy0, h, k = divergence_free_mode(nbits, 1)
         ux1, uy1 = evolve_one_step(
-            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter,
+            ux0, uy0, h; mu, vis, dt, eps=solver_tolerance, maxiter=maxiter, maxsweeps=maxsweeps,
         )
         energy_0 = kinetic_energy(ux0, uy0, h)
         energy_1 = kinetic_energy(ux1, uy1, h)
@@ -212,15 +212,15 @@ end
 
 function test_wavelength_decay(; nbits=DEFAULT_NBITS, dt=DEFAULT_DT,
                                vis=DEFAULT_VIS, mu=DEFAULT_MU,
-                               solver_tolerance=1.0e-6, maxiter=100)
+                               solver_tolerance=1.0e-6, maxiter=100, maxsweeps=100)
     @testset "Shorter wavelengths decay faster" begin
         ux_low, uy_low, h, _ = divergence_free_mode(nbits, 1)
         ux_high, uy_high, _, _ = divergence_free_mode(nbits, 2)
         low_x, low_y = evolve_one_step(
-            ux_low, uy_low, h; mu, vis, dt, eps=solver_tolerance, maxiter,
+            ux_low, uy_low, h; mu, vis, dt, eps=solver_tolerance, maxiter=maxiter, maxsweeps=maxsweeps,
         )
         high_x, high_y = evolve_one_step(
-            ux_high, uy_high, h; mu, vis, dt, eps=solver_tolerance, maxiter,
+            ux_high, uy_high, h; mu, vis, dt, eps=solver_tolerance, maxiter=maxiter, maxsweeps=maxsweeps,
         )
         low_ratio = sqrt(kinetic_energy(low_x, low_y, h) /
                          kinetic_energy(ux_low, uy_low, h))
