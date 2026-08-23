@@ -285,18 +285,7 @@ function rhs(optim::QuantumFluidsOpt, a::Dict{Symbol, MPS}, b::Dict{Symbol, MPS}
     beta_y = environment(optim.A[:y], i, a[:y][i], nothing)
     beta_y -= (tau * vis) * environment(optim.D["y,x,y"], i, b[:y][i], optim.ops["d2x"][i])
     beta_y -= (tau * vis) * environment(optim.D["y,y,y"], i, b[:y][i], optim.ops["d2y"][i])
-    result=[beta_x, beta_y]
-    xinds=inds(beta_x)
-    if length(xinds)==3
-        xinds=[xinds[2], xinds[3], xinds[1]] 
-        yinds=inds(beta_y)
-        yinds=[yinds[2], yinds[3], yinds[1]]
-        beta_x=permute(beta_x, xinds)
-        beta_y=permute(beta_y, yinds)
-    end
-   # println("inds(beta_x) = ", inds(beta_x))
-   # println("inds(beta_y) = ", inds(beta_y))
-    return result #vcat(vec.(array.(result))...)
+    return [beta_x, beta_y]
 end
 
 
@@ -368,16 +357,15 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         M=FunctionMap{Float64,false}(operator, nx+ny)
 
         beta = rhs(optim, a, b, tau, vis)
-        beta_vec=vcat(vec.(array.([beta[1], beta[2]]))...)
+        beta_x = permute(beta[1], xinds)
+        beta_y = permute(beta[2], yinds)
+        beta_vec = vcat(vec.(array.([beta_x, beta_y]))...)
         @assert length(beta_vec) == nx + ny "Length of beta does not match the expected dimension size. Expected: $(nx + ny), got: $(length(beta_vec))"
         
         exact_x = environment(optim.A[:x], i, a[:x][i], nothing)
         exact_y = environment(optim.A[:y], i, a[:y][i], nothing)
-        
-        @show inds(exact_x)
-        @show inds(beta[1])
-        @show inds(exact_y)
-        @show inds(beta[2])
+        exact_x = permute(exact_x, xinds)
+        exact_y = permute(exact_y, yinds)
 
         exact_candidate = vcat(vec.(array.([exact_x, exact_y]))...)
         @assert length(exact_candidate) == nx + ny "Length of exact u/4 candidate does not match the local system size"
@@ -387,43 +375,8 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         beta_norm = sqrt(real(dot(beta_vec, beta_vec)))
         relative_residual = residual_norm / max(beta_norm, eps(Float64))
         maximum_residual = maximum(abs, residual)
-        println(
-            "site $i u/4 residual: norm=$residual_norm " *
-            "relative=$relative_residual maxabs=$maximum_residual"
-        )
-        #=
-        cached_H_xx = environment(
-            optim.H["x,x"], i, exact_x, optim.ops["d2x"][i]
-        )
-        cached_H_xy = environment(
-            optim.H["x,y"], i, exact_y, optim.ops["d1x_d1y"][i]
-        )
-        cached_H_yx = environment(
-            optim.H["x,y"], i, exact_x, optim.ops["d1x_d1y"][i];
-            dagger=true,
-        )
-        cached_H_yy = environment(
-            optim.H["y,y"], i, exact_y, optim.ops["d2y"][i]
-        )
-        fresh_H_xx = fresh_local_mpo_action(
-            v[:x], v[:x], optim.ops["d2x"], i, exact_x
-        )
-        fresh_H_xy = fresh_local_mpo_action(
-            v[:x], v[:y], optim.ops["d1x_d1y"], i, exact_y
-        )
-        fresh_H_yx = fresh_local_mpo_action(
-            v[:y], v[:x], optim.ops["d1y_d1x"], i, exact_x
-        )
-        fresh_H_yy = fresh_local_mpo_action(
-            v[:y], v[:y], optim.ops["d2y"], i, exact_y
-        )
-        print_environment_comparison("H_xx", cached_H_xx, fresh_H_xx)
-        print_environment_comparison("H_xy", cached_H_xy, fresh_H_xy)
-        print_environment_comparison("H_yx", cached_H_yx, fresh_H_yx)
-        print_environment_comparison("H_yy", cached_H_yy, fresh_H_yy)
-        =#
+        println("site $i u/4 residual: norm=$residual_norm " *"relative=$relative_residual maxabs=$maximum_residual")
 
-        
         cvec = vcat(vec.(array.([cx, cy]))...)
         @assert length(cvec) == nx + ny "Length of cvec does not match the expected dimension size. Expected: $(nx + ny), got: $(length(cvec))"
     
@@ -432,19 +385,8 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         cg_residual_norm = sqrt(real(dot(cg_residual, cg_residual)))
         println("site $i CG residual norm: $cg_residual_norm")
 
-        solution_difference = cvec - exact_candidate
-        relative_solution_difference = norm(solution_difference) / norm(exact_candidate)
-        println("site $i relative difference from exact u/4 solution: $relative_solution_difference")
-        #update the MPS with the optimized values
-        @show norm(v[:x])
-        @show norm(v[:y])
         v[:x][optim.center] = ITensor(cvec[1:nx], xinds)
         v[:y][optim.center] = ITensor(cvec[nx+1:end], yinds)
-        print_global_error("site $i after tensor update")
-        @show norm(v[:x])
-        @show norm(v[:y])
-        @show norm(a[:x])
-        @show norm(a[:y])
     end
 
     E_0=1e-10
