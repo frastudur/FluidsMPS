@@ -25,7 +25,7 @@ function QuantumFluidsOpt(nbits::Int, ops::Dict{String, MPO}, mu::Float64, vis::
     Ay[end]=ITensor(1.0)
     A=Dict(:x=>Ax, :y=>Ay)
     
-    keys=["x,x", "x,y", "y,y", "y,x"]
+    keys=["x,x", "x,y", "y,y"]
     values=[Vector{ITensor}(undef, nbits + 1) for _ in 1:length(keys)]
     H=Dict(zip(keys, values))
     for key in keys
@@ -117,45 +117,12 @@ function buildleft!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol
 
     optim.H["x,x"][site] = optim.H["x,x"][site-1] * vxp[site-1] * optim.ops["d2x"][site-1] * v[:x][site-1]
     optim.H["x,y"][site] = optim.H["x,y"][site-1] * vxp[site-1] * optim.ops["d1x_d1y"][site-1] * v[:y][site-1]
-    optim.H["y,x"][site] = optim.H["y,x"][site-1] * vyp[site-1] * optim.ops["d1y_d1x"][site-1] * v[:x][site-1]
     optim.H["y,y"][site] = optim.H["y,y"][site-1] * vyp[site-1] * optim.ops["d2y"][site-1] * v[:y][site-1]
 
     optim.D["x,x,x"][site] = optim.D["x,x,x"][site-1] * vxp[site-1] * optim.ops["d2x"][site-1] * b[:x][site-1]
     optim.D["x,y,x"][site] = optim.D["x,y,x"][site-1] * vxp[site-1] * optim.ops["d2y"][site-1] * b[:x][site-1]
     optim.D["y,x,y"][site] = optim.D["y,x,y"][site-1] * vyp[site-1] * optim.ops["d2x"][site-1] * b[:y][site-1]
     optim.D["y,y,y"][site] = optim.D["y,y,y"][site-1] * vyp[site-1] * optim.ops["d2y"][site-1] * b[:y][site-1]
-    #=     
-    if site==2
-        optim.A[:x][site-1] = vx[site-1] * a[:x][site-1]
-        optim.A[:y][site-1] = vy[site-1] * a[:y][site-1]
-        
-        optim.H["x,x"][site-1] = vxp[site-1] * optim.ops["d2x"][site-1] * v[:x][site-1]
-        optim.H["x,y"][site-1] = vxp[site-1] * optim.ops["d1x_d1y"][site-1] * v[:y][site-1]
-        optim.H["y,x"][site-1] = vyp[site-1] * optim.ops["d1y_d1x"][site-1] * v[:x][site-1]
-        optim.H["y,y"][site-1] = vyp[site-1] * optim.ops["d2y"][site-1] * v[:y][site-1]
-        
-        optim.D["x,x,x"][site-1] = vxp[site-1] * optim.ops["d2x"][site-1] * b[:x][site-1]
-        optim.D["x,y,x"][site-1] = vxp[site-1] * optim.ops["d2y"][site-1] * b[:x][site-1]
-        optim.D["y,x,y"][site-1] = vyp[site-1] * optim.ops["d2x"][site-1] * b[:y][site-1]
-        optim.D["y,y,y"][site-1] = vyp[site-1] * optim.ops["d2y"][site-1] * b[:y][site-1]
-        
-
-    elseif site>2
-        optim.A[:x][site-1] = optim.A[:x][site-2] * vx[site-1] * a[:x][site-1]
-        optim.A[:y][site-1] = optim.A[:y][site-2] * vy[site-1] * a[:y][site-1]
-        
-        optim.H["x,x"][site-1] = optim.H["x,x"][site-2] * vxp[site-1] * optim.ops["d2x"][site-1] * v[:x][site-1]
-        optim.H["x,y"][site-1] = optim.H["x,y"][site-2] * vxp[site-1] * optim.ops["d1x_d1y"][site-1] * v[:y][site-1]
-        optim.H["y,x"][site-1] = optim.H["y,x"][site-2] * vyp[site-1] * optim.ops["d1y_d1x"][site-1] * v[:x][site-1]
-        optim.H["y,y"][site-1] = optim.H["y,y"][site-2] * vyp[site-1] * optim.ops["d2y"][site-1] * v[:y][site-1]
-
-        optim.D["x,x,x"][site-1] = optim.D["x,x,x"][site-2] * vxp[site-1] * optim.ops["d2x"][site-1] * b[:x][site-1]
-        optim.D["x,y,x"][site-1] = optim.D["x,y,x"][site-2] * vxp[site-1] * optim.ops["d2y"][site-1] * b[:x][site-1]
-        optim.D["y,x,y"][site-1] = optim.D["y,x,y"][site-2] * vyp[site-1] * optim.ops["d2x"][site-1] * b[:y][site-1]
-        optim.D["y,y,y"][site-1] = optim.D["y,y,y"][site-2] * vyp[site-1] * optim.ops["d2y"][site-1] * b[:y][site-1]
-        
-    end
-    =#
 end
 
 function buildright!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, site::Int, n::Int)
@@ -170,44 +137,12 @@ function buildright!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbo
 
     optim.H["x,x"][site] = optim.H["x,x"][site+1] * vxp[site] * optim.ops["d2x"][site] * v[:x][site]
     optim.H["x,y"][site] = optim.H["x,y"][site+1] * vxp[site] * optim.ops["d1x_d1y"][site] * v[:y][site]
-    optim.H["y,x"][site] = optim.H["y,x"][site+1] * vyp[site] * optim.ops["d1y_d1x"][site] * v[:x][site]
     optim.H["y,y"][site] = optim.H["y,y"][site+1] * vyp[site] * optim.ops["d2y"][site] * v[:y][site]
 
     optim.D["x,x,x"][site] = optim.D["x,x,x"][site+1] * vxp[site] * optim.ops["d2x"][site] * b[:x][site]
     optim.D["x,y,x"][site] = optim.D["x,y,x"][site+1] * vxp[site] * optim.ops["d2y"][site] * b[:x][site]
     optim.D["y,x,y"][site] = optim.D["y,x,y"][site+1] * vyp[site] * optim.ops["d2x"][site] * b[:y][site]
     optim.D["y,y,y"][site] = optim.D["y,y,y"][site+1] * vyp[site] * optim.ops["d2y"][site] * b[:y][site]
-    #=
-    if site==n-1
-        optim.A[:x][site+1] = vx[site+1] * a[:x][site+1]
-        optim.A[:y][site+1] = vy[site+1] * a[:y][site+1]
-        
-        optim.H["x,x"][site+1] = vxp[site+1] * optim.ops["d2x"][site+1] * v[:x][site+1]
-        optim.H["x,y"][site+1] = vxp[site+1] * optim.ops["d1x_d1y"][site+1] * v[:y][site+1]
-        optim.H["y,x"][site+1] = vyp[site+1] * optim.ops["d1y_d1x"][site+1] * v[:x][site+1]
-        optim.H["y,y"][site+1] = vyp[site+1] * optim.ops["d2y"][site+1] * v[:y][site+1]
-        
-        optim.D["x,x,x"][site+1] = vxp[site+1] * optim.ops["d2x"][site+1] * b[:x][site+1]
-        optim.D["x,y,x"][site+1] = vxp[site+1] * optim.ops["d2y"][site+1] * b[:x][site+1]
-        optim.D["y,x,y"][site+1] = vyp[site+1] * optim.ops["d2x"][site+1] * b[:y][site+1]
-        optim.D["y,y,y"][site+1] = vyp[site+1] * optim.ops["d2y"][site+1] * b[:y][site+1]
-        
-    elseif site<n-1
-        optim.A[:x][site+1] = optim.A[:x][site+2] * vx[site+1] * a[:x][site+1]
-        optim.A[:y][site+1] = optim.A[:y][site+2] * vy[site+1] * a[:y][site+1]
-        
-        optim.H["x,x"][site+1] = optim.H["x,x"][site+2] * vxp[site+1] * optim.ops["d2x"][site+1] * v[:x][site+1]
-        optim.H["x,y"][site+1] = optim.H["x,y"][site+2] * vxp[site+1] * optim.ops["d1x_d1y"][site+1] * v[:y][site+1]
-        optim.H["y,x"][site+1] = optim.H["y,x"][site+2] * vyp[site+1] * optim.ops["d1y_d1x"][site+1] * v[:x][site+1]
-        optim.H["y,y"][site+1] = optim.H["y,y"][site+2] * vyp[site+1] * optim.ops["d2y"][site+1] * v[:y][site+1]
-        
-        optim.D["x,x,x"][site+1] = optim.D["x,x,x"][site+2] * vxp[site+1] * optim.ops["d2x"][site+1] * b[:x][site+1]
-        optim.D["x,y,x"][site+1] = optim.D["x,y,x"][site+2] * vxp[site+1] * optim.ops["d2y"][site+1] * b[:x][site+1]
-        optim.D["y,x,y"][site+1] = optim.D["y,x,y"][site+2] * vyp[site+1] * optim.ops["d2x"][site+1] * b[:y][site+1]
-        optim.D["y,y,y"][site+1] = optim.D["y,y,y"][site+2] * vyp[site+1] * optim.ops["d2y"][site+1] * b[:y][site+1]
-        
-    end
-    =#
 end
 
 
@@ -235,9 +170,6 @@ end
 
 function environment(environments::AbstractVector{ITensor}, center::Int,
                      Node::ITensor, Op::Union{Nothing, ITensor}; dagger::Bool=false)
-    #edgeTensor=ITensor(1.0)
-    #L = center == firstindex(environments) ? edgeTensor : environments[center]
-    #R = center == lastindex(environments) ? edgeTensor : environments[center+1]
     L=environments[center]
     R=environments[center+1]
     if dagger 
@@ -256,8 +188,8 @@ function lhs(optim::QuantumFluidsOpt, candidate::Vector{ITensor}, dt2::Float64)
     H_xx = environment(optim.H["x,x"], i, cx, optim.ops["d2x"][i])
     H_xy = environment(optim.H["x,y"], i, cy, optim.ops["d1x_d1y"][i])
     H_yy = environment(optim.H["y,y"], i, cy, optim.ops["d2y"][i])
-    #H_yx = environment(optim.H["x,y"], i, cx, optim.ops["d1x_d1y"][i]; dagger=true)
-    H_yx = environment(optim.H["y,x"], i, cx, optim.ops["d1y_d1x"][i])
+    H_yx = environment(optim.H["x,y"], i, cx, optim.ops["d1x_d1y"][i]; dagger=true)
+ ##   H_yx = environment(optim.H["y,x"], i, cx, optim.ops["d1y_d1x"][i])
     Hcx=H_xx + H_xy 
     Hcy=H_yx + H_yy 
     result=[cx - mu*dt2*Hcx, cy - mu*dt2*Hcy]
@@ -270,8 +202,6 @@ function linoperator(optim::QuantumFluidsOpt, v::Vector{Float64}, tau2::Float64,
     cy = ITensor(v[nx+1:end], yinds)
     candidate=[cx, cy]
     result=lhs(optim, candidate, tau2)
-#    println("inds(result[1]) = ", inds(result[1]))
-#    println("inds(result[2]) = ", inds(result[2]))
     return vcat(vec.(array.(result))...)
 end
 

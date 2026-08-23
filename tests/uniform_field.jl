@@ -26,7 +26,6 @@ ops["d1y"] = Diff_1_8_y(dq, sites)
 ops["d2x"] = apply(ops["d1x"], ops["d1x"], maxdim=maxdim) #Diff_2_8_x(dq, sites)
 ops["d2y"] = apply(ops["d1y"], ops["d1y"], maxdim=maxdim) #Diff_2_8_y(dq, sites)
 ops["d1x_d1y"] = apply(ops["d1x"], ops["d1y"], maxdim=maxdim)
-ops["d1y_d1x"] = apply(ops["d1y"], ops["d1x"], maxdim=maxdim)
 
 Opt=QuantumFluidsOpt(nbits, ops, penalty, viscosity, dt, dq)
 
