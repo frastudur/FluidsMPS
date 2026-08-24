@@ -12,6 +12,8 @@ mutable struct QuantumFluidsOpt
     A::Dict{Symbol, Vector{ITensor}} #hold contraction of current MPS with previous time MPS
     H::Dict{String, Vector{ITensor}} #holds contraction matrix elements Hij or contraction Hij*Cj ?
     D::Dict{String, Vector{ITensor}} #diffusion terms
+    C1::Dict{String, Vector{ITensor}} #convective term 1 Hadamard product times partial derivative
+    C2::Dict{String, Vector{ITensor}} #convective term 2 partial derivative times Hadamard product
     center::Int
 end
 
@@ -34,13 +36,20 @@ function QuantumFluidsOpt(nbits::Int, ops::Dict{String, MPO}, mu::Float64, vis::
     end
 
     keys=["x,x,x", "x,y,x", "y,x,y", "y,y,y"]  
-    values=[Vector{ITensor}(undef, nbits + 1) for _ in 1:length(keys)]
-    D=Dict(zip(keys, values))
+    D=Dict(key => Vector{ITensor}(undef, nbits + 1) for key in keys)
+    C1=Dict(key => Vector{ITensor}(undef, nbits + 1) for key in keys)
+    C2=Dict(key => Vector{ITensor}(undef, nbits + 1) for key in keys)
+
     for key in keys
         D[key][1]=ITensor(1.0)
         D[key][end]=ITensor(1.0)
+
+        C1[key][1]=ITensor(1.0)
+        C1[key][end]=ITensor(1.0)
+        C2[key][1]=ITensor(1.0)
+        C2[key][end]=ITensor(1.0)
     end
-    return QuantumFluidsOpt(params, ops, A, H, D, 0)
+    return QuantumFluidsOpt(params, ops, A, H, D, C1, C2, 0)
 end
 
 
@@ -72,13 +81,16 @@ function reset!(optim::QuantumFluidsOpt)
     for key in keys(optim.D)
         for i in 1:nbits + 1
             optim.D[key][i]=ITensor(1.0)
+            optim.C1[key][i]=ITensor(1.0)
+            optim.C2[key][i]=ITensor(1.0)
+            
         end
     end
     optim.center=0
 end
 
 
-function movecenter!(optim::QuantumFluidsOpt, site::Int, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, n::Int)
+function movecenter!(optim::QuantumFluidsOpt, site::Int, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, n::Int, op_c1::Dict{String, MPO}, op_c2::Dict{String, MPO})
     for i in [:x, :y]
         orthogonalize!(v[i], site)
         orthogonalize!(a[i], site)
@@ -87,25 +99,25 @@ function movecenter!(optim::QuantumFluidsOpt, site::Int, v::Dict{Symbol,MPS}, a:
 
     if optim.center == 0
         for i=2:site
-            buildleft!(optim, v, a, b, i)
+            buildleft!(optim, v, a, b, i, op_c1, op_c2)
         end
         for i=n:-1:site+1
-            buildright!(optim, v, a, b, i, n)
+            buildright!(optim, v, a, b, i, n, op_c1, op_c2)
         end
     elseif site > optim.center
         for i=optim.center+1:site
-            buildleft!(optim, v, a, b, i)
+            buildleft!(optim, v, a, b, i, op_c1, op_c2)
         end
     else
         for i=optim.center:-1:site+1
-            buildright!(optim, v, a, b, i, n)
+            buildright!(optim, v, a, b, i, n, op_c1, op_c2)
         end
     end
     optim.center = site
 end
 
 
-function buildleft!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, site::Int)
+function buildleft!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, site::Int, op_c1::Dict{String, MPO}, op_c2::Dict{String, MPO})
     vx=dag(v[:x])
     vy=dag(v[:y])
 
@@ -123,9 +135,21 @@ function buildleft!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol
     optim.D["x,y,x"][site] = optim.D["x,y,x"][site-1] * vxp[site-1] * optim.ops["d2y"][site-1] * b[:x][site-1]
     optim.D["y,x,y"][site] = optim.D["y,x,y"][site-1] * vyp[site-1] * optim.ops["d2x"][site-1] * b[:y][site-1]
     optim.D["y,y,y"][site] = optim.D["y,y,y"][site-1] * vyp[site-1] * optim.ops["d2y"][site-1] * b[:y][site-1]
+
+
+    optim.C1["x,x,x"][site] = optim.C1["x,x,x"][site-1] * vxp[site-1] * op_c1["x"][site-1] * b[:x][site-1]
+    optim.C1["x,y,x"][site] = optim.C1["x,y,x"][site-1] * vxp[site-1] * op_c1["y"][site-1] * b[:x][site-1]
+    optim.C1["y,x,y"][site] = optim.C1["y,x,y"][site-1] * vyp[site-1] * op_c1["x"][site-1] * b[:y][site-1]
+    optim.C1["y,y,y"][site] = optim.C1["y,y,y"][site-1] * vyp[site-1] * op_c1["y"][site-1] * b[:y][site-1]
+
+
+    optim.C2["x,x,x"][site] = optim.C2["x,x,x"][site-1] * vxp[site-1] * op_c2["x"][site-1] * b[:x][site-1]
+    optim.C2["x,y,x"][site] = optim.C2["x,y,x"][site-1] * vxp[site-1] * op_c2["y"][site-1] * b[:x][site-1]
+    optim.C2["y,x,y"][site] = optim.C2["y,x,y"][site-1] * vyp[site-1] * op_c2["x"][site-1] * b[:y][site-1]
+    optim.C2["y,y,y"][site] = optim.C2["y,y,y"][site-1] * vyp[site-1] * op_c2["y"][site-1] * b[:y][site-1]
 end
 
-function buildright!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, site::Int, n::Int)
+function buildright!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbol,MPS}, b::Dict{Symbol,MPS}, site::Int, n::Int, op_c1::Dict{String, MPO}, op_c2::Dict{String, MPO})
     vx=dag(v[:x])
     vy=dag(v[:y])
 
@@ -143,7 +167,18 @@ function buildright!(optim::QuantumFluidsOpt, v::Dict{Symbol,MPS}, a::Dict{Symbo
     optim.D["x,y,x"][site] = optim.D["x,y,x"][site+1] * vxp[site] * optim.ops["d2y"][site] * b[:x][site]
     optim.D["y,x,y"][site] = optim.D["y,x,y"][site+1] * vyp[site] * optim.ops["d2x"][site] * b[:y][site]
     optim.D["y,y,y"][site] = optim.D["y,y,y"][site+1] * vyp[site] * optim.ops["d2y"][site] * b[:y][site]
+
+    optim.C1["x,x,x"][site] = optim.C1["x,x,x"][site+1] * vxp[site] * op_c1["x"][site] * b[:x][site]
+    optim.C1["x,y,x"][site] = optim.C1["x,y,x"][site+1] * vxp[site] * op_c1["y"][site] * b[:x][site]
+    optim.C1["y,x,y"][site] = optim.C1["y,x,y"][site+1] * vyp[site] * op_c1["x"][site] * b[:y][site]
+    optim.C1["y,y,y"][site] = optim.C1["y,y,y"][site+1] * vyp[site] * op_c1["y"][site] * b[:y][site]
+
+    optim.C2["x,x,x"][site] = optim.C2["x,x,x"][site+1] * vxp[site] * op_c2["x"][site] * b[:x][site]
+    optim.C2["x,y,x"][site] = optim.C2["x,y,x"][site+1] * vxp[site] * op_c2["y"][site] * b[:x][site]
+    optim.C2["y,x,y"][site] = optim.C2["y,x,y"][site+1] * vyp[site] * op_c2["x"][site] * b[:y][site]
+    optim.C2["y,y,y"][site] = optim.C2["y,y,y"][site+1] * vyp[site] * op_c2["y"][site] * b[:y][site]
 end
+
 
 
 
@@ -206,15 +241,28 @@ function linoperator(optim::QuantumFluidsOpt, v::Vector{Float64}, tau2::Float64,
 end
 
 
-function rhs(optim::QuantumFluidsOpt, a::Dict{Symbol, MPS}, b::Dict{Symbol, MPS}, tau::Float64, vis::Float64)
+function rhs(optim::QuantumFluidsOpt, a::Dict{Symbol, MPS}, b::Dict{Symbol, MPS}, tau::Float64, vis::Float64, op_c1::Dict{String, MPO}, op_c2::Dict{String, MPO})
     i=optim.center
+    
     beta_x = environment(optim.A[:x], i, a[:x][i], nothing)
-    beta_x -= (tau * vis) * environment(optim.D["x,x,x"], i, b[:x][i], optim.ops["d2x"][i])
-    beta_x -= (tau * vis) * environment(optim.D["x,y,x"], i, b[:x][i], optim.ops["d2y"][i])
+    #diffusion
+    beta_x += (tau * vis) * environment(optim.D["x,x,x"], i, b[:x][i], optim.ops["d2x"][i])
+    beta_x += (tau * vis) * environment(optim.D["x,y,x"], i, b[:x][i], optim.ops["d2y"][i])
+    #convection
+    beta_x -= (tau * 0.5) * environment(optim.C1["x,x,x"], i, b[:x][i], op_c1["x"][i]) 
+    beta_x -= (tau * 0.5) * environment(optim.C1["x,y,x"], i, b[:x][i], op_c1["y"][i]) 
+    beta_x -= (tau * 0.5) * environment(optim.C2["x,x,x"], i, b[:x][i], op_c2["x"][i]) 
+    beta_x -= (tau * 0.5) * environment(optim.C2["x,y,x"], i, b[:x][i], op_c2["y"][i]) 
+
 
     beta_y = environment(optim.A[:y], i, a[:y][i], nothing)
-    beta_y -= (tau * vis) * environment(optim.D["y,x,y"], i, b[:y][i], optim.ops["d2x"][i])
-    beta_y -= (tau * vis) * environment(optim.D["y,y,y"], i, b[:y][i], optim.ops["d2y"][i])
+    beta_y += (tau * vis) * environment(optim.D["y,x,y"], i, b[:y][i], optim.ops["d2x"][i])
+    beta_y += (tau * vis) * environment(optim.D["y,y,y"], i, b[:y][i], optim.ops["d2y"][i])
+
+    beta_y -= (tau * 0.5) * environment(optim.C1["y,x,y"], i, b[:y][i], op_c1["x"][i]) 
+    beta_y -= (tau * 0.5) * environment(optim.C1["y,y,y"], i, b[:y][i], op_c1["y"][i]) 
+    beta_y -= (tau * 0.5) * environment(optim.C2["y,x,y"], i, b[:y][i], op_c2["x"][i]) 
+    beta_y -= (tau * 0.5) * environment(optim.C2["y,y,y"], i, b[:y][i], op_c2["y"][i]) 
     return [beta_x, beta_y]
 end
 
@@ -232,6 +280,11 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
     nbits=optim.params.nbits
     ops=optim.ops
 
+    C1xx, C2xx = convective_operators(b[:x], ops["rank-3-delta"], ops["d1x"])
+    C1yy, C2yy = convective_operators(b[:y], ops["rank-3-delta"], ops["d1y"])
+
+    op_convective1=Dict("x"=>C1xx, "y"=>C1yy)
+    op_convective2=Dict("x"=>C2xx, "y"=>C2yy)
     function relative_mps_error(state::MPS, reference::MPS)
         difference = state - reference
         difference_norm = sqrt(abs(real(inner(difference, difference))))
@@ -271,7 +324,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
     end
 
     function update!(i::Int)
-        movecenter!(optim, i, v, a, b, nbits)
+        movecenter!(optim, i, v, a, b, nbits, op_convective1, op_convective2)
 
         cx = v[:x][optim.center]
         cy = v[:y][optim.center]
@@ -286,7 +339,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         
         M=FunctionMap{Float64,false}(operator, nx+ny)
 
-        beta = rhs(optim, a, b, tau, vis)
+        beta = rhs(optim, a, b, tau, vis, op_convective1, op_convective2)
         beta_x = permute(beta[1], xinds)
         beta_y = permute(beta[2], yinds)
         beta_vec = vcat(vec.(array.([beta_x, beta_y]))...)
