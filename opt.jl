@@ -285,44 +285,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
 
     op_convective1=Dict("x"=>C1xx, "y"=>C1yy)
     op_convective2=Dict("x"=>C2xx, "y"=>C2yy)
-    function relative_mps_error(state::MPS, reference::MPS)
-        difference = state - reference
-        difference_norm = sqrt(abs(real(inner(difference, difference))))
-        reference_norm = sqrt(abs(real(inner(reference, reference))))
-        return difference_norm / max(reference_norm, eps(Float64))
-    end
-
-    function print_global_error(label)
-        error_x = relative_mps_error(v[:x], a[:x])
-        error_y = relative_mps_error(v[:y], a[:y])
-        println("$label global v-a error: x=$error_x y=$error_y")
-    end
-
-    function fresh_local_mpo_action(bra::MPS, ket::MPS, mpo::MPO,
-                                    center::Int, node::ITensor)
-        left = ITensor(1.0)
-        for site in 1:(center - 1)
-            left *= dag(prime(bra[site])) * mpo[site] * ket[site]
-        end
-
-        right = ITensor(1.0)
-        for site in nbits:-1:(center + 1)
-            right *= dag(prime(bra[site])) * mpo[site] * ket[site]
-        end
-
-        return noprime(left * node * mpo[center] * right)
-    end
-
-    function print_environment_comparison(name, cached::ITensor, fresh::ITensor)
-        difference_norm = norm(array(cached - fresh))
-        fresh_norm = norm(array(fresh))
-        relative_difference = difference_norm / max(fresh_norm, eps(Float64))
-        println(
-            "site $(optim.center) $name cached-vs-fresh H: " *
-            "abs=$difference_norm relative=$relative_difference"
-        )
-    end
-
+    
     function update!(i::Int)
         movecenter!(optim, i, v, a, b, nbits, op_convective1, op_convective2)
 
