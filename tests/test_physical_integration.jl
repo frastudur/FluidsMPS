@@ -5,7 +5,7 @@ using Dates
 using ITensors
 using ITensorMPS
 
-include("../Optimizer.jl")
+include("../Optimizer/Optimizer.jl")
 using .Optimizer
 
 # Reuse the exact dense <-> QIFS-MPS conversion helpers already used by the

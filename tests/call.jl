@@ -2,8 +2,8 @@ import QuanticsGrids as QG
 using QuanticsTCI: quanticscrossinterpolate
 import TensorCrossInterpolation as TCI
 using TCIITensorConversion
-using ITensorMPS
-include("../Optimizer.jl")
+using ITensors,ITensorMPS
+include("../Optimizer/Optimizer.jl")
 using .Optimizer 
 
 penalty=2.5e5
@@ -86,6 +86,8 @@ ops["d1y"] = Diff_1_8_y(dq, sites)
 ops["d2x"] = apply(ops["d1x"], ops["d1x"], maxdim=maxdim) #Diff_2_8_x(dq, sites)
 ops["d2y"] = apply(ops["d1y"], ops["d1y"], maxdim=maxdim) #Diff_2_8_y(dq, sites)
 ops["d1x_d1y"] = apply(ops["d1x"], ops["d1y"], maxdim=maxdim)
+
+ops["rank-3-delta"]=MPO([delta(sites[i], sites[i]', sites[i]'') for i in 1:length(sites)]) #3 rank kronecker delta MPO for convective terms
 
 Opt=QuantumFluidsOpt(nbits, ops, penalty, viscosity, dt, dq)
 
