@@ -373,7 +373,7 @@ function RK4(optim, ux, uy; tol=1e-6, maxiter=100, maxdim=16, maxsweeps=100)
     return result[1], result[2]
 end
 
-function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, maxsweeps=100)
+function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, maxsweeps=100, callback::Function=(args...)->nothing)
     dt=optim.params.dt
     t=0.0
     while t < tmax
@@ -382,6 +382,7 @@ function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, m
         vx, vy = RK4(optim, vx, vy; tol=tol, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps)
         t += dt
         @show norm(vx), norm(vy)
+        callback(vx, vy, t)
     end
     return vx, vy
 end

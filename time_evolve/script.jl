@@ -5,26 +5,17 @@ using TCIITensorConversion
 using ITensors,ITensorMPS
 include("../Optimizer/Optimizer.jl")
 using .Optimizer 
+using HDF5
 
-
-penalty=2.5e5
-viscosity=1e-5
-nbits=10 #resolution of the grid
+#load parameters
+include("loadconfigs.jl")
 dq=1.0/(2^nbits-1)
 dt = 0.1 * 2.0^-(nbits-1)
-maxdim=39
-dimension=2 #Space dimension
+
+
 grid = QG.DiscretizedGrid{2}(nbits, (0,0), (1,1); includeendpoint = true)
 
 u0=1.0
-
-#show fields of grid which i do not know in advance
-for field in fieldnames(typeof(grid))
-    println("Field: ", field)
-    println(getfield(grid, field))
-end
-
-
 
 function maxnorm(f1::Function, f2::Function, grid::QG.DiscretizedGrid{2})
     maxval = 0.0
@@ -62,9 +53,11 @@ D2_fun = (x,y) -> deltavar * d2_fun(x,y)
 
 ux = (x,y) -> j1_fun(y) + D1_fun(x,y)
 uy = (x,y) -> D2_fun(x,y)
-
-
 print("Initial velocity field defined. ")
+
+
+
+
 
 # build mps with QuanticsTCI
 u1Q, rank1, error1 = quanticscrossinterpolate(Float64, ux, grid) 
@@ -74,11 +67,26 @@ u2Q, rank2, error2 = quanticscrossinterpolate(Float64, uy, grid)
 ttx=TCI.TensorTrain(u1Q.tci)
 tty=TCI.TensorTrain(u2Q.tci)
 
-sites = siteinds("Qudit", nbits, dim=2^dimension)
+sites = siteinds("Qudit", nbits, dim=4)
 ux=ITensorMPS.MPS(ttx, sites=sites)
 uy=ITensorMPS.MPS(tty, sites=sites)
 
 u = [ux, uy]
+
+#prepare output file for the mps
+fname="$output_folder/velocity_field.h5"
+h5open(fname, "w") do file
+    write(file, "ux_t0", ux)
+    write(file, "uy_t0", uy)
+end
+
+
+function callback(vx, vy, t)
+    h5open(fname, "cw") do file
+        write(file, "ux_t$(t)", vx)
+        write(file, "uy_t$(t)", vy)
+    end
+end
 
 #Differential operators
 ops = Dict{String, MPO}()
@@ -93,6 +101,6 @@ ops["rank-3-delta"]=MPO([delta(sites[i], sites[i]', sites[i]'') for i in 1:lengt
 Opt=QuantumFluidsOpt(nbits, ops, penalty, viscosity, dt, dq)
 
 t0 = time()
-vx_t, vy_t = time_evolution(Opt, ux, uy, 2*dt; tol=1e-6, maxiter=100, maxdim=maxdim, maxsweeps=50)
+vx_t, vy_t = time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)
 t1 = time()
 println("Time evolution took ", t1 - t0, " seconds.")
