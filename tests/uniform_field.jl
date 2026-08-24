@@ -4,7 +4,7 @@ using .Optimizer
 using CSV
 include("test_differential_operators.jl")
 penalty=2.5e5
-viscosity=0.0
+viscosity=1e-5
 nbits=4
 dq=1.0/(2^nbits-1)
 dt = 0.1 * 2.0^-(nbits-1)
