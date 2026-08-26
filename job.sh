@@ -1,10 +1,11 @@
 #!/bin/bash
 
-script="time_evolve/script.jl"
+
+script="tests/runtime_one_step/script.jl"
 
 
 run_id=$(date +%Y%m%d_%H%M%S)
-output_folder="time_evolve/run_${run_id}"
+output_folder="tests/runtime_one_step/run_${run_id}"
 mkdir -p $output_folder
 
 cp "$script" "$output_folder/script.jl"

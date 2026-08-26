@@ -10,7 +10,7 @@ mutable struct QuantumFluidsOpt
     params::Params #parameters for the optimization
     ops::Dict{String, MPO} #dictionary of MPOs for differential operators
     A::Dict{Symbol, Vector{ITensor}} #hold contraction of current MPS with previous time MPS
-    H::Dict{String, Vector{ITensor}} #holds contraction matrix elements Hij or contraction Hij*Cj ?
+    H::Dict{String, Vector{ITensor}} #holds contraction matrix elements Hij 
     D::Dict{String, Vector{ITensor}} #diffusion terms
     C1::Dict{String, Vector{ITensor}} #convective term 1 Hadamard product times partial derivative
     C2::Dict{String, Vector{ITensor}} #convective term 2 partial derivative times Hadamard product
@@ -54,7 +54,6 @@ end
 
 
 function getinfo(optim::QuantumFluidsOpt)
-    #print list of parameters, operators keys 
     println("Parameters:")
     println("penalty term: ", optim.params.mu)
     println("Kinematic viscosity: ", optim.params.vis)
@@ -224,7 +223,6 @@ function lhs(optim::QuantumFluidsOpt, candidate::Vector{ITensor}, dt2::Float64)
     H_xy = environment(optim.H["x,y"], i, cy, optim.ops["d1x_d1y"][i])
     H_yy = environment(optim.H["y,y"], i, cy, optim.ops["d2y"][i])
     H_yx = environment(optim.H["x,y"], i, cx, optim.ops["d1x_d1y"][i]; dagger=true)
- ##   H_yx = environment(optim.H["y,x"], i, cx, optim.ops["d1y_d1x"][i])
     Hcx=H_xx + H_xy 
     Hcy=H_yx + H_yy 
     result=[cx - mu*dt2*Hcx, cy - mu*dt2*Hcy]
@@ -326,19 +324,19 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
     it=0
     while abs((E_1 - E_0)/E_0) > tol && it < maxsweeps
         for j in 1:nbits
-            println("updating site $j")
             update!(j)
             
         end
         for j in nbits-1:-1:1
-            println("updating site $j")
             update!(j)
         end
         it += 1
         E_0 = E_1
         cvec = vcat(vec.(array.([v[:x][optim.center], v[:y][optim.center]]))...)
         E_1 = dot(cvec, cvec)
-        println("Energy: $E_1")
+        if it == maxsweeps
+            println("Warning: Maximum number of sweeps reached without convergence.")
+        end
     end
     return v[:x], v[:y]
 end

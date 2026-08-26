@@ -3,7 +3,7 @@ using QuanticsTCI: quanticscrossinterpolate
 import TensorCrossInterpolation as TCI
 using TCIITensorConversion
 using ITensors,ITensorMPS
-include("../Optimizer/Optimizer.jl")
+include("../../Optimizer/Optimizer.jl")
 using .Optimizer 
 using HDF5
 
@@ -36,13 +36,13 @@ function j1_fun(y; xmin=0.4, xmax=0.6, h=0.005, u0=u0)
     return u0 / 2 * ( tanh( (y - xmin)/h ) - tanh( (y - xmax)/h ) - 1 )
 end
 
-function d1_fun(x,y; ymin=0.4, ymax=0.6, h=0.005, u0=u0)
-    out = (2 / h^2) * ( (y - ymax) * exp( -(y - ymax)^2 / h^2 ) + (y - ymin) * exp( -(y - ymin)^2 / h^2 ) )
+function d1_fun(x,y; xmin=0.4, xmax=0.6, h=0.005, u0=u0)
+    out = 2 / h^2 * ( (y - xmax) * exp( -(y - xmax)^2 / h^2 ) + (y - xmin) * exp( -(y - xmin)^2 / h^2 ) )
     return out * ( sin(8π * x) + sin(24π * x) + sin(6π * x) ) 
 end
 
-function d2_fun(x,y; ymin=0.4, ymax=0.6, h=0.005, u0=u0)
-    out = π * ( exp( -(y - ymax)^2 / h^2 ) + exp( -(y - ymin)^2 / h^2 ) )
+function d2_fun(x,y; xmin=0.4, xmax=0.6, h=0.005, u0=u0)
+    out = π * ( exp( -(y - xmax)^2 / h^2 ) + exp( -(y - xmin)^2 / h^2 ) )
     return out * ( 8*cos(8π * x) + 24*cos(24π * x) + 6*cos(6π * x) )  
 end
 
@@ -100,7 +100,4 @@ ops["rank-3-delta"]=MPO([delta(sites[i], sites[i]', sites[i]'') for i in 1:lengt
 
 Opt=QuantumFluidsOpt(nbits, ops, penalty, viscosity, dt, dq)
 
-t0 = time()
-vx_t, vy_t = time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)
-t1 = time()
-println("Time evolution took ", t1 - t0, " seconds.")
+vx_t, vy_t = @time time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)

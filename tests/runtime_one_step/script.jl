@@ -3,7 +3,7 @@ using QuanticsTCI: quanticscrossinterpolate
 import TensorCrossInterpolation as TCI
 using TCIITensorConversion
 using ITensors,ITensorMPS
-include("../Optimizer/Optimizer.jl")
+include("../../Optimizer/Optimizer.jl")
 using .Optimizer 
 using HDF5
 
@@ -100,7 +100,4 @@ ops["rank-3-delta"]=MPO([delta(sites[i], sites[i]', sites[i]'') for i in 1:lengt
 
 Opt=QuantumFluidsOpt(nbits, ops, penalty, viscosity, dt, dq)
 
-t0 = time()
-vx_t, vy_t = time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)
-t1 = time()
-println("Time evolution took ", t1 - t0, " seconds.")
+vx_t, vy_t = @time time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)

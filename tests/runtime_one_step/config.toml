@@ -1,0 +1,12 @@
+[general]
+penalty=2.5e5
+viscosity=1e-5
+nbits=10 
+maxdim=39
+
+[optimization]
+maxiter=100
+maxsweeps=20
+
+[time_evolution]
+ttotal=0.0001953125
