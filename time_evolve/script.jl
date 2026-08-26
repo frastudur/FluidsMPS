@@ -19,8 +19,9 @@ u0=1.0
 
 function maxnorm(f1::Function, f2::Function, grid::QG.DiscretizedGrid{2})
     maxval = 0.0
-    xrange=range(grid.lower_bound[1],grid.upper_bound[1], 2^nbits)
-    yrange=range(grid.lower_bound[2],grid.upper_bound[2], 2^nbits)
+    num_points = 2^nbits
+    xrange=range(0, 1, num_points)
+    yrange=range(0, 1, num_points)
     for x in xrange
         for y in yrange
             val = sqrt( f1(x,y)^2 + f2(x,y)^2 )
@@ -71,6 +72,13 @@ sites = siteinds("Qudit", nbits, dim=4)
 ux=ITensorMPS.MPS(ttx, sites=sites)
 uy=ITensorMPS.MPS(tty, sites=sites)
 
+
+@show maxlinkdim(ux)
+@show maxlinkdim(uy)
+@show norm(ux)
+@show norm(uy)
+
+
 u = [ux, uy]
 
 #prepare output file for the mps
@@ -92,9 +100,9 @@ end
 ops = Dict{String, MPO}()
 ops["d1x"] = Diff_1_8_x(dq, sites)
 ops["d1y"] = Diff_1_8_y(dq, sites)
-ops["d2x"] = apply(ops["d1x"], ops["d1x"], maxdim=maxdim) #Diff_2_8_x(dq, sites)
-ops["d2y"] = apply(ops["d1y"], ops["d1y"], maxdim=maxdim) #Diff_2_8_y(dq, sites)
-ops["d1x_d1y"] = apply(ops["d1x"], ops["d1y"], maxdim=maxdim)
+ops["d2x"] = Diff_2_8_x(dq, sites)
+ops["d2y"] = Diff_2_8_y(dq, sites)
+ops["d1x_d1y"] = apply(ops["d1x"], ops["d1y"])
 
 ops["rank-3-delta"]=MPO([delta(sites[i], sites[i]', sites[i]'') for i in 1:length(sites)]) #3 rank kronecker delta MPO for convective terms
 
