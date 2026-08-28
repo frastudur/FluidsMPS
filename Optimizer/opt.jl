@@ -374,13 +374,18 @@ end
 function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, maxsweeps=100, callback::Function=(args...)->nothing)
     dt=optim.params.dt
     t=0.0
+    nsnapshots=50 
+    snapshot_interval = Int(tmax / nsnapshots)
+    snapshot_counter = 0
     while t < tmax
-        println("Time: $t")
         reset!(optim)
         vx, vy = RK4(optim, vx, vy; tol=tol, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps)
         t += dt
-        @show norm(vx), norm(vy)
-        callback(vx, vy, t)
+        if snapshot_counter % snapshot_interval == 0
+            @show t
+            callback(vx, vy, t)
+        end
+        snapshot_counter += 1
     end
     return vx, vy
 end

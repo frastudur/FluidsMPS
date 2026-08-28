@@ -2,7 +2,7 @@
 penalty=2.5e5
 viscosity=1e-5
 nbits=4
-maxdim=16
+maxdim=39
 
 [optimization]
 maxiter=100

@@ -5,20 +5,39 @@ using ITensors
 using ITensorMPS
 using Plots
 using Printf
+using TOML
 
 const DEFAULT_FPS = 8
 const DEFAULT_MAX_FRAMES = 120
 
 """Return the newest velocity_field.h5 below time_evolve/."""
-function newest_velocity_file(root::AbstractString = @__DIR__)
+function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=39)
     search_root = joinpath(root, "time_evolve")
     isdir(search_root) || error("Could not find $search_root")
     files = String[]
-    for (dir, _, names) in walkdir(search_root)
-        "velocity_field.h5" in names && push!(files, joinpath(dir, "velocity_field.h5"))
+    preferred_files = String[]
+    for run in readdir(search_root; join=true)
+        isdir(run) || continue
+        if "velocity_field.h5" in readdir(run)
+            if "config.toml" in readdir(run)
+                config = TOML.parsefile(joinpath(run, "config.toml"))
+                dim = config["general"]["maxdim"]
+                candidate = joinpath(run, "velocity_field.h5")
+                try
+                    h5open(candidate, "r") do file
+                        available_snapshots(file)
+                    end
+                    push!(files, candidate)
+                    dim == maxdim && push!(preferred_files, candidate)
+                catch error
+                    @warn "Skipping unreadable or incomplete HDF5 output" candidate exception=(error, catch_backtrace())
+                end
+            end
+        end
     end
     isempty(files) && error("No velocity_field.h5 found below $search_root")
-    return files[argmax(mtime.(files))]
+    candidates = isempty(preferred_files) ? files : preferred_files
+    return candidates[argmax(mtime.(candidates))]
 end
 
 """Find physical times for which both ux and uy snapshots exist."""
