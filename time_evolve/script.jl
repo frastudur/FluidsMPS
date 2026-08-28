@@ -47,7 +47,7 @@ function d2_fun(x,y; ymin=0.4, ymax=0.6, h=0.005, u0=u0)
     return out * ( 8*cos(8π * x) + 24*cos(24π * x) + 6*cos(6π * x) )  
 end
 
-deltavar=u0/(40.0 * maxnorm(d1_fun, d2_fun, grid))
+deltavar=u0/(40.0 * maxnorm(d1_fun, d2_fun))
 
 D1_fun = (x,y) -> deltavar * d1_fun(x,y)
 D2_fun = (x,y) -> deltavar * d2_fun(x,y)

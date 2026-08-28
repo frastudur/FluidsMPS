@@ -2,6 +2,15 @@ using TOML
 
 config=TOML.parsefile("time_evolve/config.toml")
 
+#if maxdim is provided as a command line argument, override the value in the config file
+if length(ARGS) > 1
+    for arg in ARGS[2:end]
+        maxdim = parse(Int, arg)
+        config["general"]["maxdim"] = maxdim
+        
+    end
+end
+
 # General parameters
 penalty=config["general"]["penalty"]
 viscosity=config["general"]["viscosity"]

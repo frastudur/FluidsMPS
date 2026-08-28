@@ -376,16 +376,16 @@ function time_evolution(optim, vx, vy, tmax; tol=1e-6, maxiter=100, maxdim=16, m
     t=0.0
     nsnapshots=50 
     snapshot_interval = tmax / nsnapshots
-    snapshot_counter = 0
+    snapshot_counter = 1
     while t < tmax
         reset!(optim)
         vx, vy = RK4(optim, vx, vy; tol=tol, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps)
         t += dt
-        if t >= snapshot_counter * snapshot_interval
+        if t + eps(Float64(tmax)) >= snapshot_counter * snapshot_interval
             @show t
             callback(vx, vy, t)
+            snapshot_counter += 1
         end
-        snapshot_counter += 1
     end
     return vx, vy
 end
