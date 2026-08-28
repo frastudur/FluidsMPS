@@ -17,7 +17,7 @@ grid = QG.DiscretizedGrid{2}(nbits, (0,0), (1,1); includeendpoint = true)
 
 u0=1.0
 
-function maxnorm(f1::Function, f2::Function, grid::QG.DiscretizedGrid{2})
+function maxnorm(f1::Function, f2::Function)
     maxval = 0.0
     num_points = 2^nbits
     xrange=range(0, 1, num_points)
@@ -57,13 +57,15 @@ uy = (x,y) -> D2_fun(x,y)
 print("Initial velocity field defined. ")
 
 
-
-
+coordinates=range(0, 1, 2^nbits)
+norm_ux=sqrt(sum([ux(x,y)^2 for x in coordinates, y in coordinates]))
+norm_uy=sqrt(sum([uy(x,y)^2 for x in coordinates, y in coordinates]))
 
 # build mps with QuanticsTCI
-u1Q, rank1, error1 = quanticscrossinterpolate(Float64, ux, grid) 
-u2Q, rank2, error2 = quanticscrossinterpolate(Float64, uy, grid)
-
+u1Q, rank1, error1 = quanticscrossinterpolate(Float64, ux, grid; nrandominitpivot=50, nsearchglobalpivot=50)
+u2Q, rank2, error2 = quanticscrossinterpolate(Float64, uy, grid; nrandominitpivot=50, nsearchglobalpivot=50)
+@show error1
+@show error2
 # convert to ITensorMPS format
 ttx=TCI.TensorTrain(u1Q.tci)
 tty=TCI.TensorTrain(u2Q.tci)
@@ -78,6 +80,8 @@ uy=ITensorMPS.MPS(tty, sites=sites)
 @show norm(ux)
 @show norm(uy)
 
+@assert isapprox(norm(ux), norm_ux; atol=1e-6)
+@assert isapprox(norm(uy), norm_uy; atol=1e-6)
 
 u = [ux, uy]
 
