@@ -108,19 +108,7 @@ C1yy, C2yy = convective_operators(b[:y], ops["rank-3-delta"], ops["d1y"])
 
 op_convective1=Dict("x"=>C1xx, "y"=>C1yy)
 op_convective2=Dict("x"=>C2xx, "y"=>C2yy)
-
-println("\n")
+    
 [@time movecenter!(Opt, i, Dict(:x => ux, :y => uy), a, b, nbits, op_convective1, op_convective2) for i in 1:nbits]
 
-println("\n")
-[@time movecenter!(Opt, i, Dict(:x => ux, :y => uy), a, b, nbits, op_convective1, op_convective2) for i in nbits:-1:1]
-
-Opt.center=0 
-
-println("\n")
-[@time movecenter!(Opt, i, Dict(:x => ux, :y => uy), a, b, nbits, op_convective1, op_convective2) for i in 1:nbits]
-
-
-
-println("\n")
 vx_t, vy_t = @time time_evolution(Opt, ux, uy, ttotal; tol=1e-6, maxiter=maxiter, maxdim=maxdim, maxsweeps=maxsweeps, callback=callback)

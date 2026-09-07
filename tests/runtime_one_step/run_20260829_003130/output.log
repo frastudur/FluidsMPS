@@ -1,0 +1,167 @@
+WARNING: Method definition (::Type{ITensorMPS.MPS})(TensorCrossInterpolation.TensorTrain{T, N} where N) where {T} in module TCIITensorConversion at /Users/francesca/.julia/packages/TensorCrossInterpolation/mqCuS/ext/TCIITensorConversion/ttmpsconversion.jl:1 overwritten in module TCIITensorConversion at /Users/francesca/.julia/packages/TCIITensorConversion/lz6XR/src/ttmpsconversion.jl:12.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+output_folder = "tests/runtime_one_step/run_20260829_003130"
+Initial velocity field defined.   0.906800 seconds (1.25 M allocations: 285.165 MiB, 12.43% gc time, 84.18% compilation time)
+  0.000404 seconds (3.31 k allocations: 737.266 KiB)
+  0.000645 seconds (4.53 k allocations: 1.670 MiB)
+  0.000918 seconds (4.56 k allocations: 4.269 MiB)
+  0.001186 seconds (4.57 k allocations: 6.997 MiB)
+  0.003738 seconds (4.63 k allocations: 20.233 MiB)
+  0.089543 seconds (4.67 k allocations: 63.790 MiB, 85.90% gc time)
+  0.015148 seconds (4.67 k allocations: 78.910 MiB, 8.66% gc time)
+  0.004838 seconds (4.66 k allocations: 28.913 MiB, 4.33% gc time)
+  0.000914 seconds (4.52 k allocations: 2.875 MiB)
+site 1 CG residual norm: 4.950073594226449e-6
+site 2 CG residual norm: 1.7366179701651596e-8
+site 3 CG residual norm: 8.456893916722672e-9
+site 4 CG residual norm: 4.6317979850195216e-9
+site 5 CG residual norm: 1.0832005326407662e-7
+site 6 CG residual norm: 2.342476287159376e-6
+site 7 CG residual norm: 4.89401251260347e-6
+site 8 CG residual norm: 3.595789210323256e-6
+site 9 CG residual norm: 2.254367541738546e-9
+site 10 CG residual norm: 7.238732849805364e-14
+site 9 CG residual norm: 1.5995694112718754e-11
+site 8 CG residual norm: 2.599535113402263e-8
+site 7 CG residual norm: 1.2024107111878307e-6
+site 6 CG residual norm: 4.399435126409647e-7
+site 5 CG residual norm: 6.855929476689147e-8
+site 4 CG residual norm: 4.818583696343308e-10
+site 3 CG residual norm: 1.915885400436602e-9
+site 2 CG residual norm: 4.235585656829429e-13
+site 1 CG residual norm: 1.1110853650628879e-13
+site 1 CG residual norm: 1.1110853650628879e-13
+site 2 CG residual norm: 4.3746657897148945e-13
+site 3 CG residual norm: 8.278453644798489e-13
+site 4 CG residual norm: 9.240309156652747e-10
+site 5 CG residual norm: 7.115087722559432e-8
+site 6 CG residual norm: 8.690773365720524e-7
+site 7 CG residual norm: 1.6076124898692768e-6
+site 8 CG residual norm: 2.2017532912129215e-6
+site 9 CG residual norm: 9.466552965037264e-10
+site 10 CG residual norm: 6.58367875702411e-13
+site 9 CG residual norm: 1.17272326151381e-11
+site 8 CG residual norm: 2.5958570709315544e-8
+site 7 CG residual norm: 5.921760380090559e-7
+site 6 CG residual norm: 1.5595656680539417e-7
+site 5 CG residual norm: 2.388883583327464e-8
+site 4 CG residual norm: 2.1148075438052077e-10
+site 3 CG residual norm: 5.059186873817182e-10
+site 2 CG residual norm: 7.467086416448997e-13
+site 1 CG residual norm: 2.213408824028381e-13
+site 1 CG residual norm: 3.330716138449655e-6
+site 2 CG residual norm: 1.3043987913749558e-7
+site 3 CG residual norm: 1.4770202641016175e-8
+site 4 CG residual norm: 1.1523538302886483e-6
+site 5 CG residual norm: 2.6722472939114614e-5
+site 6 CG residual norm: 0.00019471849889899774
+site 7 CG residual norm: 0.0002876994290505264
+site 8 CG residual norm: 9.754328410443873e-5
+site 9 CG residual norm: 1.4272116700940133e-6
+site 10 CG residual norm: 5.68977578559532e-14
+site 9 CG residual norm: 1.0156685300208859e-7
+site 8 CG residual norm: 7.795631255471202e-6
+site 7 CG residual norm: 4.9688351755189466e-5
+site 6 CG residual norm: 6.417957211951169e-5
+site 5 CG residual norm: 1.687428824827077e-5
+site 4 CG residual norm: 1.3952083833316134e-7
+site 3 CG residual norm: 4.455725425822849e-9
+site 2 CG residual norm: 4.174122427718116e-13
+site 1 CG residual norm: 1.5729243546876559e-13
+site 1 CG residual norm: 1.5729243546876559e-13
+site 2 CG residual norm: 5.027595274592887e-13
+site 3 CG residual norm: 1.5299314260548618e-12
+site 4 CG residual norm: 2.484722428375826e-7
+site 5 CG residual norm: 1.6783765071407196e-5
+site 6 CG residual norm: 6.5037227426512e-5
+site 7 CG residual norm: 9.837924353415088e-5
+site 8 CG residual norm: 7.869307719618223e-5
+site 9 CG residual norm: 6.740351224839596e-7
+site 10 CG residual norm: 7.185449914506523e-13
+site 9 CG residual norm: 6.578276508590086e-8
+site 8 CG residual norm: 1.4558440922067038e-5
+site 7 CG residual norm: 4.433877087116006e-5
+site 6 CG residual norm: 2.3528506969073766e-5
+site 5 CG residual norm: 9.521219585482976e-6
+site 4 CG residual norm: 6.031566472314941e-8
+site 3 CG residual norm: 9.39250291686043e-10
+site 2 CG residual norm: 2.8423105356905613e-13
+site 1 CG residual norm: 3.807687472368279e-13
+site 1 CG residual norm: 3.330323217728221e-6
+site 2 CG residual norm: 1.304397447635549e-7
+site 3 CG residual norm: 1.4229810580123743e-8
+site 4 CG residual norm: 1.1806108018706367e-6
+site 5 CG residual norm: 2.701876766073024e-5
+site 6 CG residual norm: 0.00019612699881385375
+site 7 CG residual norm: 0.00028646451917041846
+site 8 CG residual norm: 9.790015113838477e-5
+site 9 CG residual norm: 1.3981491827465061e-6
+site 10 CG residual norm: 3.015973919588608e-14
+site 9 CG residual norm: 9.317436291036081e-8
+site 8 CG residual norm: 7.793314108781159e-6
+site 7 CG residual norm: 4.968319057264398e-5
+site 6 CG residual norm: 6.165439825518873e-5
+site 5 CG residual norm: 1.6751227261568054e-5
+site 4 CG residual norm: 1.732393449221548e-7
+site 3 CG residual norm: 4.340386163970421e-9
+site 2 CG residual norm: 8.149773732678652e-13
+site 1 CG residual norm: 1.7600614566929494e-13
+site 1 CG residual norm: 1.7600614566929494e-13
+site 2 CG residual norm: 9.506231397572636e-13
+site 3 CG residual norm: 1.2512425979382658e-12
+site 4 CG residual norm: 2.2279908247962247e-7
+site 5 CG residual norm: 1.688332866210799e-5
+site 6 CG residual norm: 6.498301403390118e-5
+site 7 CG residual norm: 9.964648008834445e-5
+site 8 CG residual norm: 7.646327639623796e-5
+site 9 CG residual norm: 6.631128406171226e-7
+site 10 CG residual norm: 2.9417289596867057e-13
+site 9 CG residual norm: 6.810603618938939e-8
+site 8 CG residual norm: 1.4343151395631054e-5
+site 7 CG residual norm: 4.4119887262504715e-5
+site 6 CG residual norm: 2.4393541667666994e-5
+site 5 CG residual norm: 8.898757753857449e-6
+site 4 CG residual norm: 7.480061589404266e-8
+site 3 CG residual norm: 9.523975073144986e-10
+site 2 CG residual norm: 9.406773704370154e-13
+site 1 CG residual norm: 2.7108749351957035e-13
+site 1 CG residual norm: 4.950068294161586e-6
+site 2 CG residual norm: 1.736373883191375e-8
+site 3 CG residual norm: 1.0105801636609819e-8
+site 4 CG residual norm: 4.41464018849291e-9
+site 5 CG residual norm: 1.0863597797834355e-7
+site 6 CG residual norm: 2.344408489829066e-6
+site 7 CG residual norm: 4.911291005857114e-6
+site 8 CG residual norm: 3.592477994450709e-6
+site 9 CG residual norm: 2.123236358859717e-9
+site 10 CG residual norm: 7.016882401943942e-14
+site 9 CG residual norm: 1.036773740399573e-11
+site 8 CG residual norm: 2.5915846986745826e-8
+site 7 CG residual norm: 1.1684242077666128e-6
+site 6 CG residual norm: 4.3774391737730804e-7
+site 5 CG residual norm: 6.878394699890933e-8
+site 4 CG residual norm: 4.807050164801208e-10
+site 3 CG residual norm: 1.7665499003807056e-9
+site 2 CG residual norm: 3.884837557091251e-13
+site 1 CG residual norm: 1.3817112793046604e-13
+site 1 CG residual norm: 1.3817112793046604e-13
+site 2 CG residual norm: 4.1194281598628635e-13
+site 3 CG residual norm: 8.117697643511277e-13
+site 4 CG residual norm: 8.392763175466678e-10
+site 5 CG residual norm: 7.100018430636126e-8
+site 6 CG residual norm: 8.622155839643842e-7
+site 7 CG residual norm: 1.5936433201007479e-6
+site 8 CG residual norm: 2.405821216815793e-6
+site 9 CG residual norm: 1.0262159746848832e-9
+site 10 CG residual norm: 6.417348793951759e-14
+site 9 CG residual norm: 2.0610827823121556e-11
+site 8 CG residual norm: 2.688918830170275e-8
+site 7 CG residual norm: 5.827033357786703e-7
+site 6 CG residual norm: 1.5796762178790926e-7
+site 5 CG residual norm: 2.5735325368109404e-8
+site 4 CG residual norm: 4.90913642103753e-10
+site 3 CG residual norm: 4.903257139031955e-10
+site 2 CG residual norm: 6.513357609705871e-13
+site 1 CG residual norm: 2.360510514585365e-13
+t = 0.0001953125
+ 10.811386 seconds (18.31 M allocations: 37.040 GiB, 8.36% gc time, 28.07% compilation time)

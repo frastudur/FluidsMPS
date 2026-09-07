@@ -9,35 +9,38 @@ using TOML
 
 const DEFAULT_FPS = 8
 const DEFAULT_MAX_FRAMES = 120
+const HEATMAP_TITLE_FONTSIZE = 14
+const HEATMAP_GUIDE_FONTSIZE = 14
+const HEATMAP_TICK_FONTSIZE = 11
+const HEATMAP_COLORBAR_TITLE_FONTSIZE = 14
+const HEATMAP_COLORBAR_TICK_FONTSIZE = 11
 
 """Return the newest velocity_field.h5 below time_evolve/."""
-function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=39)
+function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=16, n=4)
     search_root = joinpath(root, "time_evolve")
     isdir(search_root) || error("Could not find $search_root")
     files = String[]
-    preferred_files = String[]
     for run in readdir(search_root; join=true)
         isdir(run) || continue
         if "velocity_field.h5" in readdir(run)
             if "config.toml" in readdir(run)
                 config = TOML.parsefile(joinpath(run, "config.toml"))
                 dim = config["general"]["maxdim"]
+                nbits = config["general"]["nbits"]
                 candidate = joinpath(run, "velocity_field.h5")
                 try
                     h5open(candidate, "r") do file
                         available_snapshots(file)
                     end
-                    push!(files, candidate)
-                    dim == maxdim && push!(preferred_files, candidate)
+                    dim==maxdim && nbits==n && push!(files, candidate)
                 catch error
                     @warn "Skipping unreadable or incomplete HDF5 output" candidate exception=(error, catch_backtrace())
                 end
             end
         end
     end
-    isempty(files) && error("No velocity_field.h5 found below $search_root")
-    candidates = isempty(preferred_files) ? files : preferred_files
-    return candidates[argmax(mtime.(candidates))]
+    isempty(files) && error("No velocity_field.h5 found below $search_root with maxdim=$maxdim")
+    return files[argmin(mtime.(files))]
 end
 
 """Find physical times for which both ux and uy snapshots exist."""
@@ -59,9 +62,11 @@ function available_snapshots(file::HDF5.File)
     return snapshots
 end
 
-"""Expand the qudit MPS representation into a matrix indexed as field[x, y]."""
+"""Decode the fused Quantics MPS as `field[x + 1, y + 1]`."""
 function mps_to_field(state::MPS)
-    sites = siteinds(state)
+    normalize!(state)
+    sites = siteinds(state) #local dimensions are 4 (2 qubits) site=((x0 y0), (x1 y1), ...)
+    @assert all(dim(s) == 4 for s in sites)
     nbits = length(sites)
     n = 2^nbits
     full_tensor = Array(contract(state), sites...)
@@ -72,7 +77,7 @@ function mps_to_field(state::MPS)
             shift = nbits - site
             xbit = (x >> shift) & 1
             ybit = (y >> shift) & 1
-            local_states[site] = 1 + xbit + 2ybit
+            local_states[site] = 1 + xbit + 2*ybit
         end
         field[x + 1, y + 1] = real(full_tensor[local_states...])
     end
@@ -101,11 +106,13 @@ function component_plot(field::AbstractMatrix, coordinate::Symbol, time::Real, c
     y = range(0.0, 1.0; length = ny)
     limit = color_limit > 0 ? color_limit : 1.0
     label = coordinate === :x ? "uₓ" : "uᵧ"
-    formatted_time = @sprintf("%.8g", time)
+    formatted_time = @sprintf("%.4g", time)
     return heatmap(x, y, field'; color = :balance, clims = (-limit, limit),
         aspect_ratio = :equal, xlims = (0, 1), ylims = (0, 1), xlabel = "x",
         ylabel = "y", title = "$label velocity component — t = $formatted_time",
-        colorbar_title = label, size = (800, 700))
+            titlefontsize = HEATMAP_TITLE_FONTSIZE,
+            guidefontsize = HEATMAP_GUIDE_FONTSIZE, tickfontsize = HEATMAP_TICK_FONTSIZE,
+        colorbar_title = label, size = (600, 450))
 end
 
 function render_velocity(input_file::AbstractString, output_dir::AbstractString;
