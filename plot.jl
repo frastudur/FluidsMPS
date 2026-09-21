@@ -16,7 +16,7 @@ const HEATMAP_COLORBAR_TITLE_FONTSIZE = 14
 const HEATMAP_COLORBAR_TICK_FONTSIZE = 11
 
 """Return the newest velocity_field.h5 below time_evolve/."""
-function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=16, n=4)
+function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=32, n=4)
     search_root = joinpath(root, "time_evolve")
     isdir(search_root) || error("Could not find $search_root")
     files = String[]
@@ -40,7 +40,7 @@ function newest_velocity_file(root::AbstractString = @__DIR__; maxdim=16, n=4)
         end
     end
     isempty(files) && error("No velocity_field.h5 found below $search_root with maxdim=$maxdim")
-    return files[argmin(mtime.(files))]
+    return files[argmax(mtime.(files))]
 end
 
 """Find physical times for which both ux and uy snapshots exist."""

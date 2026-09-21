@@ -1,12 +1,17 @@
+# Edit values below and save before starting a new run.
+# Start with the defaults. Larger nbits and maxdim can increase time and memory.
+
 [general]
-penalty=2.5e5
-viscosity=1e-5
-nbits=4
-maxdim=32
+penalty = 2.5e5  # Incompressibility penalty strength.
+viscosity = 1e-5 # Kinematic viscosity.
+nbits = 4       # Grid points per axis = 2^nbits (4 gives a 16 x 16 grid).
+maxdim = 32     # Maximum MPS bond dimension (controls compression).
 
 [optimization]
-maxiter=100
-maxsweeps=20
+maxiter = 100   # Maximum conjugate-gradient iterations per local solve.
+maxsweeps = 20  # Maximum optimization sweeps.
 
 [time_evolution]
-ttotal=1
+ttotal = 1     # Total simulated time; try 0.1 for a shorter run.
+
+# The time step is computed in script.jl: dt = 0.1 * 2^(-(nbits - 1)).
