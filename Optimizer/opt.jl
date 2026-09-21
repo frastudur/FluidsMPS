@@ -313,7 +313,7 @@ function optimize(optim, vx, vy, ax, ay, bx, by, tau; tol=1e-6, maxiter=100, max
         cg!(cvec, M, beta_vec, maxiter=maxiter, reltol=tol, abstol=tol^2, verbose=false, log=false)
         cg_residual = M * cvec - beta_vec
         cg_residual_norm = sqrt(real(dot(cg_residual, cg_residual)))
-        println("site $i CG residual norm: $cg_residual_norm")
+    #    println("site $i CG residual norm: $cg_residual_norm")
 
         v[:x][optim.center] = ITensor(cvec[1:nx], xinds)
         v[:y][optim.center] = ITensor(cvec[nx+1:end], yinds)

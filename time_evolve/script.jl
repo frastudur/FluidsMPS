@@ -74,6 +74,9 @@ sites = siteinds("Qudit", nbits, dim=4)
 ux=ITensorMPS.MPS(ttx, sites=sites)
 uy=ITensorMPS.MPS(tty, sites=sites)
 
+truncate!(ux, maxdim=maxdim)
+truncate!(uy, maxdim=maxdim)
+
 
 @show maxlinkdim(ux)
 @show maxlinkdim(uy)
