@@ -1,0 +1,6 @@
+[general]
+viscosity=1e-5
+nbits=10
+
+[time_evolution]
+ttotal=1
