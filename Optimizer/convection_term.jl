@@ -1,7 +1,3 @@
-function hadamard_prod(A::AbstractArray, B::AbstractArray)
-    return A .* B
-end
-
 function hadamard_prod_mpo(A::MPS, deltas::MPO)
     return MPO(*(deltas, prime(siteinds, prime(siteinds, A)))[:])
 end
